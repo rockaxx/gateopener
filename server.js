@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const REQUIRED_PIN = "5226";
+const REQUIRED_PIN = "OPSECVALENT";
 const MAX_ATTEMPTS = 5;
 const LOCK_TIME_MS = 5000; // 10 minutes
 
