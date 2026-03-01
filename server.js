@@ -15,7 +15,7 @@ let lockedUntil = 0;
 const BAUDRATE = 115200;
 const HTTP_PORT = 8080;
 
-const PREFERRED_PORT = process.env.SERIAL_PORT || "COM3";
+const PREFERRED_PORT = process.env.SERIAL_PORT || "";
 const RESCAN_MS = 2000;
 
 const app = express();
@@ -90,7 +90,28 @@ async function tryConnect() {
   state = "CONNECTING";
 
   const ports = await listPorts();
-  const paths = ports.map(p => p.path);
+  const allow = (p) => {
+    const path = p.path || "";
+    const manu = String(p.manufacturer || "").toLowerCase();
+    const vid = String(p.vendorId || "").toLowerCase();
+    const pid = String(p.productId || "").toLowerCase();
+  
+    // Hard block onboard UARTs and junk
+    if (path === "/dev/ttyS0" || path.startsWith("/dev/ttyAMA")) return false;
+  
+    // Prefer real USB serial devices
+    if (path.startsWith("/dev/ttyUSB")) return true;
+    if (path.startsWith("/dev/ttyACM")) return true;
+    if (path.startsWith("/dev/serial/by-id/")) return true;
+  
+    // Fallback: if SerialPort gives USB VID/PID/manufacturer, allow
+    if (vid && pid) return true;
+    if (manu.includes("silicon labs") || manu.includes("wch") || manu.includes("ftdi") || manu.includes("arduino") || manu.includes("espressif")) return true;
+  
+    return false;
+  };
+  
+  const paths = ports.filter(allow).map(p => p.path);
 
   // Prefer explicit port if present
   const ordered = [];
