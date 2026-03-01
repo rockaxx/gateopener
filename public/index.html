@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ovládač brány</title>
+  <style>
+    :root{
+      --bg1:#0b1220;
+      --bg2:#0f1b33;
+      --card: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.12);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.70);
+      --shadow: 0 18px 45px rgba(0,0,0,0.35);
+      --radius: 18px;
+      --radiusBtn: 18px;
+      --focus: 0 0 0 4px rgba(255,255,255,0.16), 0 0 0 7px rgba(99,179,237,0.35);
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1000px 650px at 20% 15%, rgba(56,189,248,0.14), transparent 60%),
+        radial-gradient(900px 650px at 85% 25%, rgba(167,139,250,0.12), transparent 60%),
+        linear-gradient(180deg, var(--bg2), var(--bg1));
+      display:grid;
+      place-items:center;
+      padding:16px;
+    }
+
+    .wrap{
+      width: min(520px, 100%);
+      display:grid;
+      gap:14px;
+    }
+
+    .top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    h1{
+      margin:0;
+      font-size: 22px;
+      letter-spacing: 0.2px;
+      line-height:1.1;
+    }
+
+    .status{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.20);
+      min-height: 40px;
+      flex: 0 0 auto;
+    }
+
+    .dot{
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      background: rgba(255,255,255,0.25);
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.06);
+    }
+    .dot.ok{
+      background: rgba(34,197,94,0.95);
+      box-shadow: 0 0 0 3px rgba(34,197,94,0.18), 0 0 18px rgba(34,197,94,0.25);
+    }
+    .dot.bad{
+      background: rgba(239,68,68,0.95);
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.18), 0 0 18px rgba(239,68,68,0.25);
+    }
+
+    .statusText{
+      display:grid;
+      line-height:1.1;
+    }
+    .statusText b{
+      font-size: 13px;
+      font-weight: 650;
+    }
+    .statusText span{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      display:grid;
+      gap:12px;
+    }
+
+    .buttons{
+      display:grid;
+      gap:12px;
+    }
+
+    button{
+      width:100%;
+      min-height: 82px;
+      border-radius: var(--radiusBtn);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: var(--text);
+      background: rgba(255,255,255,0.06);
+      box-shadow: 0 14px 28px rgba(0,0,0,0.22);
+      cursor:pointer;
+      padding: 16px 16px;
+      text-align:left;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+      touch-action: manipulation;
+    }
+
+    button:focus{ outline:none; }
+    button:focus-visible{ box-shadow: var(--focus), 0 14px 28px rgba(0,0,0,0.22); }
+
+    button:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.26);
+    }
+
+    button:active{
+      transform: translateY(0px) scale(0.99);
+    }
+
+    button[disabled]{
+      opacity:0.55;
+      cursor:not-allowed;
+      transform:none;
+      box-shadow:none;
+    }
+
+    .label{
+      display:grid;
+      gap:2px;
+    }
+    .label .title{
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+    }
+    .label .desc{
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .badge{
+      flex: 0 0 auto;
+      font-size: 12px;
+      color: rgba(255,255,255,0.78);
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .open{
+      border-color: rgba(34,197,94,0.26);
+      background:
+        radial-gradient(800px 220px at 25% 0%, rgba(34,197,94,0.18), transparent 55%),
+        rgba(255,255,255,0.06);
+    }
+    .close{
+      border-color: rgba(239,68,68,0.22);
+      background:
+        radial-gradient(800px 220px at 25% 0%, rgba(239,68,68,0.14), transparent 55%),
+        rgba(255,255,255,0.06);
+    }
+
+    .toast{
+      min-height: 18px;
+      font-size: 13px;
+      color: var(--muted);
+      padding: 2px 2px 0;
+    }
+
+    .row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding-top: 4px;
+    }
+
+    .link{
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.85);
+      font-size: 13px;
+      padding: 6px 8px;
+      cursor:pointer;
+      border-radius: 10px;
+    }
+    .link:hover{
+      background: rgba(255,255,255,0.06);
+    }
+    .link:focus-visible{
+      outline:none;
+      box-shadow: var(--focus);
+    }
+
+    @media (max-width: 360px){
+      .label .title{ font-size: 20px; }
+      button{ min-height: 78px; }
+    }
+
+    /* ===== PIN overlay keypad ===== */
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:#0b1220;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+      padding: 16px;
+    }
+    .loginCard{
+      width: min(360px, 100%);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.35);
+      display: grid;
+      gap: 12px;
+    }
+    .loginTitle{
+      margin:0;
+      font-size: 18px;
+      font-weight: 750;
+    }
+
+    /* FIX: no overlay buttons on display */
+    .pinDisplay{
+      width: 100%;
+      height: 52px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.18);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 0 14px;
+      font-size: 22px;
+      letter-spacing: 6px;
+      user-select:none;
+    }
+    .pinDots{
+      opacity: 0.95;
+      white-space: nowrap;
+    }
+
+    .keypad{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .key{
+      min-height: 58px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.92);
+      font-size: 20px;
+      font-weight: 700;
+      text-align:center;
+      cursor:pointer;
+      box-shadow: 0 14px 28px rgba(0,0,0,0.18);
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+      touch-action: manipulation;
+    }
+    .key:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.22);
+    }
+    .key:active{
+      transform: translateY(0px) scale(0.99);
+    }
+    .key:focus-visible{
+      outline:none;
+      box-shadow: var(--focus), 0 14px 28px rgba(0,0,0,0.18);
+    }
+
+    .keyEnter{
+      background:
+        radial-gradient(700px 220px at 25% 0%, rgba(56,189,248,0.16), transparent 55%),
+        rgba(255,255,255,0.06);
+      border-color: rgba(56,189,248,0.22);
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+    .keyBack{
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .loginError{
+      min-height: 18px;
+      color: #ff6b6b;
+      font-size: 13px;
+    }
+    .loginHint{
+      color: rgba(255,255,255,0.65);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="loginOverlay" class="overlay" style="display:none;">
+    <div class="loginCard" role="dialog" aria-modal="true" aria-label="Prihlásenie PIN">
+      <h3 class="loginTitle">Zadajte PIN</h3>
+
+      <div class="pinDisplay" aria-live="polite" aria-atomic="true">
+        <div id="pinDots" class="pinDots">____</div>
+      </div>
+
+      <div class="keypad">
+        <button class="key" type="button" onclick="pinAdd('1')">1</button>
+        <button class="key" type="button" onclick="pinAdd('2')">2</button>
+        <button class="key" type="button" onclick="pinAdd('3')">3</button>
+
+        <button class="key" type="button" onclick="pinAdd('4')">4</button>
+        <button class="key" type="button" onclick="pinAdd('5')">5</button>
+        <button class="key" type="button" onclick="pinAdd('6')">6</button>
+
+        <button class="key" type="button" onclick="pinAdd('7')">7</button>
+        <button class="key" type="button" onclick="pinAdd('8')">8</button>
+        <button class="key" type="button" onclick="pinAdd('9')">9</button>
+
+        <button id="keyBack" class="key keyBack" type="button">⌫</button>
+        <button class="key" type="button" onclick="pinAdd('0')">0</button>
+        <button class="key keyEnter" type="button" onclick="login()">Enter</button>
+      </div>
+
+      <div id="loginError" class="loginError"></div>
+      <div class="loginHint">⌫ vymaže znak, podrž ⌫ pre vymazanie celého PINu.</div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="top">
+      <h1>Ovládač brány</h1>
+
+      <div class="status" aria-live="polite" aria-atomic="true">
+        <span id="dot" class="dot" aria-hidden="true"></span>
+        <div class="statusText">
+          <b id="stateText">Kontrolujem</b>
+          <span id="portText">Port: -</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" role="region" aria-label="Ovládanie">
+      <div class="buttons">
+        <button id="btnOpen" class="open" type="button" onclick="sendCmd('B1')" aria-label="Otvoriť bránu">
+          <div class="label">
+            <div class="title">OTVORIŤ</div>
+            <div class="desc">Otvorenie brány</div>
+          </div>
+          <div class="badge">Tlačidlo 1</div>
+        </button>
+
+        <button id="btnClose" class="close" type="button" onclick="sendCmd('B2')" aria-label="Zatvoriť bránu">
+          <div class="label">
+            <div class="title">ZATVORIŤ</div>
+            <div class="desc">Zatvorenie brány</div>
+          </div>
+          <div class="badge">Tlačidlo 2</div>
+        </button>
+      </div>
+
+      <div class="row">
+        <div id="toast" class="toast">Pripravené.</div>
+        <button class="link" type="button" onclick="refreshStatus(true)">Obnoviť</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let authPin = localStorage.getItem("gate_pin");
+    let pinBuffer = "";
+
+    // long-press backspace to clear
+    let backHoldTimer = null;
+    let backDidClear = false;
+
+    function ensureLogin() {
+      const overlay = document.getElementById("loginOverlay");
+      if (!authPin) {
+        overlay.style.display = "flex";
+        pinBuffer = "";
+        renderPin();
+        document.getElementById("loginError").textContent = "";
+        bindBackspaceKey();
+      } else {
+        overlay.style.display = "none";
+      }
+    }
+
+    function renderPin() {
+      const dotsEl = document.getElementById("pinDots");
+      const shownLen = Math.min(pinBuffer.length, 8);
+      const dots = "•".repeat(shownLen);
+      const blanks = "_".repeat(Math.max(4 - shownLen, 0));
+      dotsEl.textContent = (dots + blanks).padEnd(4, "_").slice(0, 8);
+    }
+
+    function pinAdd(d) {
+      if (pinBuffer.length >= 8) return;
+      pinBuffer += d;
+      renderPin();
+      document.getElementById("loginError").textContent = "";
+    }
+
+    function pinBack() {
+      if (pinBuffer.length === 0) return;
+      pinBuffer = pinBuffer.slice(0, -1);
+      renderPin();
+      document.getElementById("loginError").textContent = "";
+    }
+
+    function pinClear() {
+      pinBuffer = "";
+      renderPin();
+      document.getElementById("loginError").textContent = "";
+    }
+
+    function bindBackspaceKey() {
+      const back = document.getElementById("keyBack");
+      if (!back || back.dataset.bound === "1") return;
+      back.dataset.bound = "1";
+
+      const start = (e) => {
+        e.preventDefault();
+        backDidClear = false;
+        backHoldTimer = setTimeout(() => {
+          backDidClear = true;
+          pinClear();
+        }, 450);
+      };
+
+      const end = (e) => {
+        e.preventDefault();
+        if (backHoldTimer) clearTimeout(backHoldTimer);
+        backHoldTimer = null;
+        if (!backDidClear) pinBack();
+      };
+
+      back.addEventListener("pointerdown", start);
+      back.addEventListener("pointerup", end);
+      back.addEventListener("pointercancel", end);
+      back.addEventListener("pointerleave", end);
+    }
+
+    async function login() {
+      const pin = pinBuffer;
+
+      const r = await fetch('/login', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ pin })
+      });
+
+      if (!r.ok) {
+        let j = null;
+        try { j = await r.json(); } catch {}
+        document.getElementById("loginError").textContent = (j && j.error) ? j.error : "Chyba";
+        pinClear();
+        return;
+      }
+
+      authPin = pin;
+      localStorage.setItem("gate_pin", pin);
+      document.getElementById("loginOverlay").style.display = "none";
+      pinClear();
+    }
+
+    function logout() {
+      localStorage.removeItem("gate_pin");
+      authPin = null;
+      ensureLogin();
+    }
+
+    // physical keyboard support for overlay
+    window.addEventListener("keydown", (e) => {
+      const overlayVisible = document.getElementById("loginOverlay").style.display !== "none";
+      if (!overlayVisible) return;
+
+      if (e.key >= "0" && e.key <= "9") {
+        e.preventDefault();
+        pinAdd(e.key);
+        return;
+      }
+      if (e.key === "Backspace") {
+        e.preventDefault();
+        pinBack();
+        return;
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        login();
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        pinClear();
+      }
+    });
+
+    let busy = false;
+
+    function setButtonsEnabled(enabled) {
+      document.getElementById('btnOpen').disabled = !enabled || busy;
+      document.getElementById('btnClose').disabled = !enabled || busy;
+    }
+
+    function setStatus(state, port) {
+      const dot = document.getElementById('dot');
+      const stateText = document.getElementById('stateText');
+      const portText = document.getElementById('portText');
+
+      portText.textContent = "Port: " + (port || "-");
+
+      if (state === "CONNECTED") {
+        dot.className = "dot ok";
+        stateText.textContent = "Pripojené";
+        setButtonsEnabled(true);
+      } else if (state === "CONNECTING") {
+        dot.className = "dot";
+        stateText.textContent = "Pripájam";
+        setButtonsEnabled(false);
+      } else {
+        dot.className = "dot bad";
+        stateText.textContent = "Nepripojené";
+        setButtonsEnabled(false);
+      }
+    }
+
+    function toast(msg) {
+      document.getElementById('toast').textContent = msg || "";
+    }
+
+    async function refreshStatus(showToast) {
+      try {
+        const r = await fetch('/status', { cache: 'no-store' });
+        const j = await r.json();
+        setStatus(j.state, j.port);
+        if (showToast) toast("Stav obnovený.");
+      } catch {
+        setStatus("DISCONNECTED", null);
+        if (showToast) toast("Server nedostupný.");
+      }
+    }
+
+    async function sendCmd(cmd) {
+      if (!authPin) { ensureLogin(); return; }
+      if (busy) return;
+
+      busy = true;
+      setButtonsEnabled(true);
+
+      toast("Odosielam...");
+      try {
+        const r = await fetch('/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-auth': authPin
+          },
+          body: JSON.stringify({ cmd })
+        });
+
+        if (!r.ok) {
+          let j = null;
+          try { j = await r.json(); } catch {}
+
+          const err = j && j.error ? j.error : "Chyba pri odoslaní.";
+          toast(err);
+
+          if (r.status === 401) {
+            logout();
+          }
+        } else {
+          toast(cmd === "B1" ? "OTVORIŤ odoslané." : "ZATVORIŤ odoslané.");
+        }
+      } catch {
+        toast("Server nedostupný.");
+      } finally {
+        busy = false;
+        await refreshStatus(false);
+        setButtonsEnabled(true);
+      }
+    }
+
+    refreshStatus(false);
+    setInterval(() => refreshStatus(false), 1500);
+    ensureLogin();
+  </script>
+</body>
+</html>
